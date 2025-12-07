@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 专属点菜系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .menu-section {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .category h3 {
+            color: #ff6b6b;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .menu-item {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .menu-item:hover {
+            border-color: #ff6b6b;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.1);
+        }
+
+        .menu-item.selected {
+            background: #fff5f5;
+            border-color: #ff6b6b;
+        }
+
+        .item-image {
+            width: 100%;
+            height: 120px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .menu-item:hover .item-image img {
+            transform: scale(1.05);
+        }
+
+        .item-image .emoji-fallback {
+            font-size: 3rem;
+            color: #ccc;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .item-desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            flex-grow: 1;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #ff6b6b;
+            background: white;
+            color: #ff6b6b;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .quantity-btn:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .quantity-btn:disabled:hover {
+            background: white;
+            color: #ccc;
+        }
+
+        .quantity-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .order-items {
+            min-height: 50px;
+            margin-bottom: 15px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        .order-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-item-quantity {
+            background: #ff6b6b;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .order-item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .remove-item {
+            color: #ff6b6b;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .remove-item:hover {
+            background: #fff5f5;
+        }
+
+        .total-section {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+        }
+
+        .total-items {
+            color: #ff6b6b;
+        }
+
+        .form-group {
+            margin: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .submit-btn {
+            width: calc(100% - 40px);
+            margin: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+
+        .error-notification {
+            background: #ff6b6b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💖 专属点菜系统</h1>
+            <p>为最特别的你准备的美食选择</p>
+        </div>
+
+        <div class="menu-section" id="menuSection">
+            <div class="loading" id="menuLoading">
+                正在加载菜单...
+            </div>
+        </div>
+
+        <div class="order-summary">
+            <h3 style="margin-bottom: 15px;">📋 已选菜品</h3>
+            <div class="order-items" id="orderItems">
+                <div class="empty-state">
+                    <div style="font-size: 3rem; opacity: 0.5;">🍽️</div>
+                    <p>还没有选择菜品哦</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">点击上方菜单开始点菜吧！</p>
+                </div>
+            </div>
+            <div class="total-section">
+                <span>总计：</span>
+                <span class="total-items" id="totalItems">0份菜品</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="customerName">👩 你的名字</label>
+            <input type="text" id="customerName" class="form-control" placeholder="输入你的名字" value="女朋友">
+        </div>
+
+        <div class="form-group">
+            <label for="peopleCount">👥 用餐人数</label>
+            <select id="peopleCount" class="form-control">
+                <option value="1">1人</option>
+                <option value="2" selected>2人</option>
+                <option value="3">3人</option>
+                <option value="4">4人</option>
+                <option value="5">5人</option>
+                <option value="6">6人以上</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="specialNote">📝 特别要求（口味偏好、忌口等）</label>
+            <textarea id="specialNote" class="form-control" rows="3" placeholder="例如：少辣、不要香菜、多放点醋等"></textarea>
+        </div>
+
+        <button class="submit-btn" id="submitOrder" disabled>
+            提交订单 💌
+        </button>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 全局变量
+        let selectedItems = {};
+        let menuData = [];
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMenu();
+            setupEventListeners();
+        });
+
+        // 加载菜单
+        async function loadMenu() {
+            try {
+                const response = await fetch('/api/get_menu');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                menuData = await response.json();
+                console.log("菜单加载成功，菜品数量：", menuData.length);
+                renderMenu();
+
+            } catch (error) {
+                console.error("获取菜单失败：", error);
+                showNotification("无法加载菜单，请刷新页面重试", true);
+                useFallbackMenu();
+            }
+        }
+
+        // 使用备用菜单数据
+        function useFallbackMenu() {
+            menuData = [
+                { id: 1, name: "麻辣香锅", category: "热菜", description: "香辣过瘾，配料丰富", image: "🌶️", photo: "/static/images/malaxiangguo.jpg" },
+                { id: 2, name: "清蒸鲈鱼", category: "热菜", description: "鲜嫩可口，营养健康", image: "🐟", photo: "/static/images/qingzhengluyu.jpg" },
+                { id: 3, name: "蒜蓉西兰花", category: "素菜", description: "清淡爽口，蒜香浓郁", image: "🥦", photo: "/static/images/suanrongxilanhua.jpg" },
+                { id: 4, name: "番茄鸡蛋汤", category: "汤类", description: "家常味道，暖心暖胃", image: "🍅", photo: "/static/images/fanqiejidantang.jpg" },
+                { id: 5, name: "可乐鸡翅", category: "热菜", description: "甜而不腻，肉质鲜嫩", image: "🍗", photo: "/static/images/kelejichi.jpg" },
+                { id: 6, name: "拍黄瓜", category: "凉菜", description: "清爽开胃，夏日首选", image: "🥒", photo: "/static/images/paihuanggua.jpg" },
+                { id: 7, name: "红烧肉", category: "热菜", description: "肥而不腻，入口即化", image: "🥩", photo: "/static/images/hongshaorou.jpg" },
+                { id: 8, name: "蛋炒饭", category: "主食", description: "粒粒分明，蛋香四溢", image: "🍚", photo: "/static/images/danchaofan.jpg" },
+                { id: 9, name: "水果沙拉", category: "甜品", description: "多种水果，健康美味", image: "🍓", photo: "/static/images/shuiguoshala.jpg" },
+                { id: 10, name: "珍珠奶茶", category: "饮品", description: "Q弹珍珠，香浓奶茶", image: "🧋", photo: "/static/images/zhenzhunaicha.jpg" }
+            ];
+            renderMenu();
+        }
+
+        // 渲染菜单 - 这里是最重要的修改部分
+        function renderMenu() {
+            const menuSection = document.getElementById('menuSection');
+
+            // 按分类分组
+            const categories = {};
+            menuData.forEach(item => {
+                if (!categories[item.category]) {
+                    categories[item.category] = [];
+                }
+                categories[item.category].push(item);
+            });
+
+            // 生成菜单HTML
+            let html = '';
+
+            for (const [category, items] of Object.entries(categories)) {
+                html += `
+                    <div class="category">
+                        <h3>${category}</h3>
+                        <div class="menu-grid">
+                `;
+
+                items.forEach(item => {
+                    const isSelected = selectedItems[item.id] !== undefined;
+                    const quantity = isSelected ? selectedItems[item.id].quantity : 0;
+
+                    // 使用图片和表情符号作为备选显示
+                    html += `
+                        <div class="menu-item ${isSelected ? 'selected' : ''}" data-id="${item.id}">
+                            <div class="item-image">
+                                ${item.photo ? `
+                                    <img src="${item.photo}" alt="${item.name}"
+                                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'emoji-fallback\\'>${item.image || '🍽️'}</div>'">
+                                ` : `
+                                    <div class="emoji-fallback">${item.image || '🍽️'}</div>
+                                `}
+                            </div>
+                            <div class="item-header">
+                                <div class="item-name">
+                                    ${item.image || '🍽️'} ${item.name}
+                                </div>
+                            </div>
+                            <div class="item-desc">${item.description}</div>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn minus" onclick="changeQuantity(${item.id}, -1)" ${quantity === 0 ? 'disabled' : ''}>-</button>
+                                <div class="quantity-display">${quantity > 0 ? `${quantity}份` : '选择'}</div>
+                                <button class="quantity-btn plus" onclick="changeQuantity(${item.id}, 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            menuSection.innerHTML = html;
+
+            // 添加点击事件
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('quantity-btn')) {
+                        const itemId = parseInt(item.dataset.id);
+                        const currentQuantity = selectedItems[itemId]?.quantity || 0;
+                        if (currentQuantity === 0) {
+                            changeQuantity(itemId, 1);
+                        }
+                    }
+                });
+            });
+        }
+
+        // 修改数量
+        function changeQuantity(itemId, delta) {
+            const item = menuData.find(i => i.id === itemId);
+            if (!item) return;
+
+            const current = selectedItems[itemId] || { ...item, quantity: 0 };
+            const newQuantity = Math.max(0, current.quantity + delta);
+
+            if (newQuantity === 0) {
+                delete selectedItems[itemId];
+            } else {
+                selectedItems[itemId] = {
+                    ...current,
+                    quantity: newQuantity
+                };
+            }
+
+            // 更新UI
+            updateOrderSummary();
+            updateMenuItems();
+            updateSubmitButton();
+        }
+
+        // 移除菜品
+        function removeItem(itemId) {
+            delete selectedItems[itemId];
+            updateOrderSummary();
+            updateMenuItems();
+            updateSubmitButton();
+        }
+
+        // 更新订单摘要
+        function updateOrderSummary() {
+            const container = document.getElementById('orderItems');
+            const totalElement = document.getElementById('totalItems');
+
+            const items = Object.values(selectedItems);
+            const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem; opacity: 0.5;">🍽️</div>
+                        <p>还没有选择菜品哦</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">点击上方菜单开始点菜吧！</p>
+                    </div>
+                `;
+                totalElement.textContent = '0份菜品';
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                html += `
+                    <div class="order-item">
+                        <div class="order-item-info">
+                            <span class="order-item-quantity">${item.quantity}</span>
+                            <span class="order-item-name">${item.image || '🍽️'} ${item.name}</span>
+                        </div>
+                        <span class="remove-item" onclick="removeItem(${item.id})">移除</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            totalElement.textContent = `${totalQuantity}份菜品`;
+        }
+
+        // 更新菜单项
+        function updateMenuItems() {
+            document.querySelectorAll('.menu-item').forEach(menuItem => {
+                const itemId = parseInt(menuItem.dataset.id);
+                const item = selectedItems[itemId];
+                const quantity = item ? item.quantity : 0;
+
+                if (quantity > 0) {
+                    menuItem.classList.add('selected');
+                } else {
+                    menuItem.classList.remove('selected');
+                }
+
+                const quantityDisplay = menuItem.querySelector('.quantity-display');
+                const minusBtn = menuItem.querySelector('.minus');
+
+                quantityDisplay.textContent = quantity > 0 ? `${quantity}份` : '选择';
+                minusBtn.disabled = quantity === 0;
+            });
+        }
+
+        // 更新提交按钮
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitOrder');
+            const totalQuantity = Object.values(selectedItems).reduce((sum, item) => sum + item.quantity, 0);
+            const hasItems = totalQuantity > 0;
+
+            submitBtn.disabled = !hasItems;
+            submitBtn.textContent = hasItems ?
+                `提交订单 (${totalQuantity}份菜品) 💌` :
+                '提交订单 💌';
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            document.getElementById('submitOrder').addEventListener('click', submitOrder);
+
+            // 监听图片加载错误
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName === 'IMG' && e.target.classList.contains('item-image')) {
+                    console.log('图片加载失败:', e.target.src);
+                    // 用表情符号替代
+                    const emoji = e.target.alt ? '🍽️' : '❌';
+                    e.target.outerHTML = `<div class="emoji-fallback">${emoji}</div>`;
+                }
+            }, true);
+        }
+
+        // 提交订单
+        async function submitOrder() {
+            const submitBtn = document.getElementById('submitOrder');
+            const customerName = document.getElementById('customerName').value.trim() || '女朋友';
+            const peopleCount = parseInt(document.getElementById('peopleCount').value) || 2;
+            const specialNote = document.getElementById('specialNote').value.trim();
+
+            const orderData = {
+                items: Object.values(selectedItems).map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    image: item.image || '🍽️'
+                })),
+                customer_name: customerName,
+                people: peopleCount,
+                note: specialNote
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中... 💌';
+
+            try {
+                const response = await fetch('/api/place_order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('✅ 订单提交成功！微信通知已发送');
+                    
+                    // 清空选择
+                    selectedItems = {};
+                    updateOrderSummary();
+                    updateMenuItems();
+                    
+                    // 清空备注
+                    document.getElementById('specialNote').value = '';
+
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        updateSubmitButton();
+                    }, 3000);
+
+                } else {
+                    showNotification(`❌ 提交失败: ${result.message}`, true);
+                    submitBtn.disabled = false;
+                    updateSubmitButton();
+                }
+
+            } catch (error) {
+                console.error('提交订单失败:', error);
+                showNotification('❌ 网络错误，请稍后重试', true);
+                submitBtn.disabled = false;
+                updateSubmitButton();
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = isError ? 'notification error-notification' : 'notification';
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // 暴露函数给全局
+        window.changeQuantity = changeQuantity;
+        window.removeItem = removeItem;
+    </script>
+</body>
+</html>
